@@ -6,15 +6,19 @@ using UnityEngine;
 public class DialogueManager : MonoBehaviour
 {
     private const float MessageDuration = 4f;
+    private const float AudioPlaybackDuration = 2f;
 
     private readonly Queue<GameObject> messageQueue = new Queue<GameObject>();
     private readonly Dictionary<string, GameObject> messageObjects = new Dictionary<string, GameObject>();
 
     private Transform textBox;
+    private GameObject startUI;
     private GameObject tvScreen;
     private GameObject npcQueue;
     private GameObject endUI;
+    private PlayerMovement playerMovement;
     private Coroutine messageRoutine;
+    private bool gameStarted;
     private bool introFinished;
     private bool npcDialogueStarted;
     private bool objectiveOneTriggered;
@@ -26,6 +30,8 @@ public class DialogueManager : MonoBehaviour
 
     [SerializeField] private GameObject laptopUI;
     [SerializeField] private GameObject objectiveThreePlane;
+    [SerializeField] private AudioSource talkingAudioSource;
+    [SerializeField] private AudioSource victoryAudioSource;
 
     // Finds the UI and scene objects, then hides elements that should start inactive.
     private void Awake()
@@ -33,23 +39,26 @@ public class DialogueManager : MonoBehaviour
         GameObject canvasObject = GameObject.Find("Canvas");
         if (canvasObject == null)
         {
-            Debug.LogError("DialogueManager could not find the scene Canvas.", this);
             return;
         }
 
         Transform textBoxTransform = canvasObject.transform.Find("PlayerTextBox");
         if (textBoxTransform == null)
         {
-            Debug.LogError("DialogueManager could not find Canvas/PlayerTextBox.", this);
             return;
         }
 
         textBox = textBoxTransform;
-        if (objectiveThreePlane == null)
+        Transform startUITransform = canvasObject.transform.Find("Start");
+        if (startUITransform != null)
         {
-            Debug.LogError("Assign the Objective plane 3 object.", this);
+            startUI = startUITransform.gameObject;
+            startUI.SetActive(true);
         }
-        else
+
+        playerMovement = GetComponent<PlayerMovement>();
+
+        if (objectiveThreePlane != null)
         {
             objectiveThreePlane.SetActive(false);
         }
@@ -59,10 +68,6 @@ public class DialogueManager : MonoBehaviour
         {
             endUI = endUITransform.gameObject;
             endUI.SetActive(false);
-        }
-        else
-        {
-            Debug.LogWarning("DialogueManager could not find Canvas/End.", this);
         }
 
         TMP_Text[] texts = textBoxTransform.GetComponentsInChildren<TMP_Text>(true);
@@ -82,26 +87,26 @@ public class DialogueManager : MonoBehaviour
         {
             tvScreen.SetActive(false);
         }
-        else
-        {
-            Debug.LogWarning("DialogueManager could not find the Tv_screen object.", this);
-        }
 
         npcQueue = GameObject.Find("NPCs");
-        if (npcQueue == null)
-        {
-            Debug.LogWarning("DialogueManager could not find the NPCs object.", this);
-        }
     }
 
-    // Starts the opening sequence of dialogue messages.
-    private void Start()
+    // Closes the start UI, begins player control, and starts the opening dialogue.
+    public void OnStartButtonPressed()
     {
-        if (textBox == null)
+        if (gameStarted)
         {
             return;
         }
 
+        if (startUI == null || playerMovement == null)
+        {
+            return;
+        }
+
+        gameStarted = true;
+        startUI.SetActive(false);
+        playerMovement.BeginGameplay();
         EnqueueMessages("Gosh I really wanna travel", "go get plane ticket", "Instruction 1");
     }
 
@@ -162,7 +167,6 @@ public class DialogueManager : MonoBehaviour
 
         if (laptopUI == null)
         {
-            Debug.LogWarning("Assign the laptop UI before handling laptop clicks.", this);
             return;
         }
 
@@ -174,12 +178,12 @@ public class DialogueManager : MonoBehaviour
     {
         if (!laptopAvailable || laptopSubmitted)
         {
-            Debug.LogWarning("Laptop submission ignored because the laptop is not ready or was already submitted.", this);
             return;
         }
 
         laptopSubmitted = true;
         laptopAvailable = false;
+        PlayFirstTwoSeconds(victoryAudioSource);
 
         if (laptopUI != null)
         {
@@ -271,10 +275,6 @@ public class DialogueManager : MonoBehaviour
             {
                 messageQueue.Enqueue(messageObject);
             }
-            else
-            {
-                Debug.LogWarning($"DialogueManager could not find the text object '{name}'.", this);
-            }
         }
 
         if (messageRoutine == null && messageQueue.Count > 0)
@@ -291,6 +291,7 @@ public class DialogueManager : MonoBehaviour
             GameObject message = messageQueue.Dequeue();
             textBox.gameObject.SetActive(true);
             message.SetActive(true);
+            PlayFirstTwoSeconds(talkingAudioSource);
 
             yield return new WaitForSecondsRealtime(MessageDuration);
 
@@ -312,6 +313,27 @@ public class DialogueManager : MonoBehaviour
 
         textBox.gameObject.SetActive(false);
         messageRoutine = null;
+    }
+
+    // Plays an assigned audio source from the beginning and stops it after two seconds.
+    private void PlayFirstTwoSeconds(AudioSource audioSource)
+    {
+        if (audioSource == null)
+        {
+            return;
+        }
+
+        audioSource.Stop();
+        audioSource.time = 0f;
+        audioSource.Play();
+        StartCoroutine(StopAudioAfterTwoSeconds(audioSource));
+    }
+
+    // Stops an audio source after the requested short playback interval.
+    private IEnumerator StopAudioAfterTwoSeconds(AudioSource audioSource)
+    {
+        yield return new WaitForSecondsRealtime(AudioPlaybackDuration);
+        audioSource.Stop();
     }
 
     // Hides all dialogue messages and their containing text box.

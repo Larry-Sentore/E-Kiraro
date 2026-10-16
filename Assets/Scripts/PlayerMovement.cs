@@ -17,6 +17,7 @@ public class PlayerMovement : MonoBehaviour
     private float pitch;
     private float verticalVelocity;
     private bool cursorLocked;
+    private bool gameplayStarted;
 
     private void Awake()
     {
@@ -48,13 +49,15 @@ public class PlayerMovement : MonoBehaviour
     {
         moveAction.Enable();
         lookAction.Enable();
-        SetCursorLocked(true);
+        gameplayStarted = false;
+        SetCursorLocked(false);
     }
 
     private void OnDisable()
     {
         moveAction.Disable();
         lookAction.Disable();
+        gameplayStarted = false;
         SetCursorLocked(false);
     }
 
@@ -66,6 +69,11 @@ public class PlayerMovement : MonoBehaviour
 
     private void Update()
     {
+        if (!gameplayStarted)
+        {
+            return;
+        }
+
         if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
         {
             SetCursorLocked(!cursorLocked);
@@ -97,6 +105,13 @@ public class PlayerMovement : MonoBehaviour
 
         Vector3 velocity = moveDirection * movementSpeed + Vector3.up * verticalVelocity;
         characterController.Move(velocity * Time.deltaTime);
+    }
+
+    // Enables first-person control and locks the cursor when gameplay begins.
+    public void BeginGameplay()
+    {
+        gameplayStarted = true;
+        SetCursorLocked(true);
     }
 
     private void SetCursorLocked(bool locked)

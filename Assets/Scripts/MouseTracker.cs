@@ -16,10 +16,6 @@ public class MouseTracker : MonoBehaviour
     private void Awake()
     {
         cam = GetComponent<Camera>();
-        if (cam == null)
-        {
-            Debug.LogError("MouseTracker must be attached to a Camera.", this);
-        }
 
         dialogueManager = GetComponentInParent<DialogueManager>();
         if (dialogueManager == null)
@@ -66,7 +62,6 @@ public class MouseTracker : MonoBehaviour
 
         if (cam == null || dialogueManager == null)
         {
-            Debug.LogWarning("MouseTracker needs a Camera and DialogueManager.", this);
             return;
         }
 
@@ -150,7 +145,6 @@ public class MouseTracker : MonoBehaviour
         MeshFilter meshFilter = remote.GetComponent<MeshFilter>();
         if (meshFilter == null || meshFilter.sharedMesh == null)
         {
-            Debug.LogWarning("TV_remote_control needs a Collider or a MeshFilter with a mesh to be clickable.", remote);
             return;
         }
 
@@ -173,7 +167,6 @@ public class MouseTracker : MonoBehaviour
             Renderer[] renderers = target.GetComponentsInChildren<Renderer>(true);
             if (renderers.Length == 0)
             {
-                Debug.LogWarning("The travel_guy needs a Collider or a Renderer so a click collider can be created.", target);
                 continue;
             }
 
