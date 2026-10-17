@@ -58,8 +58,8 @@ On a mouse click, a ray is cast from the camera through the cursor position, or 
 
 - **Unity Editor:** 6000.6.0f1
 - **Input System package:** 1.20.0
-- **WebGL deployment:** 
-- **Android APK:** 
+- **WebGL deployment:** https://play.unity.com/en/games/a825b7ae-0875-45ba-a63f-83c091b47272/web-buid
+- **Android APK:** https://drive.google.com/drive/u/0/folders/1QLHbGWF32v9I9IIYcury2aHo0WdKu_kt
 
 ### Run the project in the Unity Editor
 
